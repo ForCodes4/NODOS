@@ -17,6 +17,7 @@
 <body>
   <canvas id="myCanvas"></canvas>
   <script>
+    // MODIFICADO
     // Obtener el canvas y el contexto
     const canvas = document.getElementById('myCanvas');
     const context = canvas.getContext('2d');
@@ -208,8 +209,9 @@
             const dy = agent.pos.y - other.pos.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
 
-            const lineWidth = mapRange(dist, 0, canvas.width / 2, 6, 1);
-            const alpha = mapRange(dist, 0, canvas.width / 2, 1, 0.1);
+            // Ajustes para hacer las líneas más visibles
+            const lineWidth = mapRange(dist, 0, canvas.width / 2, 8, 2); // Aumentar el grosor mínimo
+            const alpha = mapRange(dist, 0, canvas.width / 2, 1, 0.3); // Aumentar el alpha mínimo
 
             context.lineWidth = lineWidth;
             context.strokeStyle = `rgba(0, 0, 0, ${alpha})`;
