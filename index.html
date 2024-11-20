@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Simulación de Canvas</title>
+  <title>Simulación de Canvas Adaptativa</title>
   <style>
     body {
       margin: 0;
@@ -22,12 +22,13 @@
     const context = canvas.getContext('2d');
 
     // Ajustar el tamaño del canvas
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
 
-    // Variables de configuración
-    const width = canvas.width;
-    const height = canvas.height;
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas(); // Llamar inicialmente para ajustar el tamaño
 
     // Función para generar un número aleatorio en un rango
     function randomRange(min, max) {
@@ -102,8 +103,8 @@
       }
 
       bounce(width, height) {
-        if (this.pos.x <= this.radius || this.pos.x >= width - this.radius) this.vel.x *= -1;
-        if (this.pos.y <= this.radius || this.pos.y >= height - this.radius) this.vel.y *= -1;
+        if (this.pos.x - this.radius <= 0 || this.pos.x + this.radius >= width) this.vel.x *= -1;
+        if (this.pos.y - this.radius <= 0 || this.pos.y + this.radius >= height) this.vel.y *= -1;
       }
 
       update() {
@@ -122,13 +123,13 @@
         context.stroke();
 
         // Mostrar el nombre del agente
-        context.font = 'bold 12px Verdana';
+        context.font = `bold ${this.radius / 2}px Verdana`; // Tamaño de fuente proporcional al radio
         context.fillStyle = 'black';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
 
         const maxWidth = this.radius * 1.8;
-        this.wrapText(context, this.name, 0, 0, maxWidth, 14);
+        this.wrapText(context, this.name, 0, 0, maxWidth, this.radius / 2);
 
         context.restore();
       }
@@ -164,15 +165,18 @@
     // Función para agregar un agente
     function addAgent() {
       if (agentIndex < agentNames.length) {
-        const x = randomRange(0, width);
-        const y = randomRange(0, height);
-
+        // Calcular el número de conexiones para ajustar el tamaño
         const connections = countConnections(agentIndex);
 
-        const minRadius = 10;
-        const maxRadius = 50;
+        // Ajustar el radio proporcionalmente al número de conexiones y al tamaño de la pantalla
+        const minRadius = Math.min(canvas.width, canvas.height) * 0.03; // 3% del tamaño mínimo de la pantalla
+        const maxRadius = Math.min(canvas.width, canvas.height) * 0.1;  // 10% del tamaño mínimo de la pantalla
         const maxConnections = adjacencyMatrix.length - 1;
         const radius = mapRange(connections, 0, maxConnections, minRadius, maxRadius);
+
+        // Generar posiciones iniciales que aseguren que los agentes no aparezcan en los bordes
+        const x = randomRange(radius, canvas.width - radius);
+        const y = randomRange(radius, canvas.height - radius);
 
         agents.push(new Agent(x, y, agentNames[agentIndex], agentIndex, radius));
         agentIndex++;
@@ -189,9 +193,9 @@
 
     // Animación
     function animate() {
-      context.clearRect(0, 0, width, height);
+      context.clearRect(0, 0, canvas.width, canvas.height);
       context.fillStyle = 'white';
-      context.fillRect(0, 0, width, height);
+      context.fillRect(0, 0, canvas.width, canvas.height);
 
       // Dibujar líneas según la matriz de adyacencia
       for (let i = 0; i < agents.length; i++) {
@@ -204,8 +208,8 @@
             const dy = agent.pos.y - other.pos.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
 
-            const lineWidth = mapRange(dist, 0, width / 2, 6, 1);
-            const alpha = mapRange(dist, 0, width / 2, 1, 0.1);
+            const lineWidth = mapRange(dist, 0, canvas.width / 2, 6, 1);
+            const alpha = mapRange(dist, 0, canvas.width / 2, 1, 0.1);
 
             context.lineWidth = lineWidth;
             context.strokeStyle = `rgba(0, 0, 0, ${alpha})`;
@@ -221,7 +225,7 @@
       agents.forEach((agent) => {
         agent.update();
         agent.draw(context);
-        agent.bounce(width, height);
+        agent.bounce(canvas.width, canvas.height);
       });
 
       requestAnimationFrame(animate);
@@ -229,11 +233,6 @@
 
     animate();
 
-    // Ajustar el canvas al cambiar el tamaño de la ventana
-    window.addEventListener('resize', function() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
   </script>
 </body>
 </html>
