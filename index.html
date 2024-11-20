@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulación de Canvas</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: white;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="myCanvas"></canvas>
+  <script>
+    // Obtener el canvas y el contexto
+    const canvas = document.getElementById('myCanvas');
+    const context = canvas.getContext('2d');
+
+    // Ajustar el tamaño del canvas
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Variables de configuración
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Función para generar un número aleatorio en un rango
+    function randomRange(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    // Función para mapear un valor de un rango a otro
+    function mapRange(value, inputMin, inputMax, outputMin, outputMax) {
+      return outputMin + ((outputMax - outputMin) * (value - inputMin)) / (inputMax - inputMin);
+    }
+
+    const agentNames = [
+      'Inversores',
+      'Industrias Productoras',
+      'Gobierno y Reguladores',
+      'Instituciones académicas',
+      'Empresas tecnológicas de base',
+      'Consumidores',
+    ];
+
+    const adjacencyMatrix = [
+      [0, 1, 1, 0, 1, 0],
+      [1, 0, 1, 1, 1, 1],
+      [1, 1, 0, 1, 1, 1],
+      [0, 1, 1, 0, 0, 0],
+      [1, 1, 1, 0, 0, 0],
+      [0, 1, 1, 0, 0, 0],
+    ];
+
+    const agents = [];
+    let agentIndex = 0;
+
+    // Función para contar conexiones
+    function countConnections(index) {
+      let connections = 0;
+      for (let i = 0; i < adjacencyMatrix.length; i++) {
+        if (adjacencyMatrix[index][i] === 1) {
+          connections++;
+        }
+      }
+      return connections;
+    }
+
+    // Clase Vector
+    class Vector {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+      }
+    }
+
+    // Clase Agent
+    class Agent {
+      constructor(x, y, name, index, radius) {
+        this.pos = new Vector(x, y);
+        this.vel = new Vector(randomRange(-0.3, 0.3), randomRange(-0.3, 0.3));
+        this.radius = radius;
+        this.name = name;
+        this.color = this.getColor(index);
+      }
+
+      getColor(index) {
+        const colors = [
+          '#e6194b',
+          '#3cb44b',
+          '#ffe119',
+          '#4363d8',
+          '#f58231',
+          '#911eb4',
+        ];
+        return colors[index % colors.length];
+      }
+
+      bounce(width, height) {
+        if (this.pos.x <= this.radius || this.pos.x >= width - this.radius) this.vel.x *= -1;
+        if (this.pos.y <= this.radius || this.pos.y >= height - this.radius) this.vel.y *= -1;
+      }
+
+      update() {
+        this.pos.x += this.vel.x;
+        this.pos.y += this.vel.y;
+      }
+
+      draw(context) {
+        context.save();
+        context.translate(this.pos.x, this.pos.y);
+        context.lineWidth = 4;
+        context.beginPath();
+        context.arc(0, 0, this.radius, 0, Math.PI * 2);
+        context.fillStyle = this.color;
+        context.fill();
+        context.stroke();
+
+        // Mostrar el nombre del agente
+        context.font = 'bold 12px Verdana';
+        context.fillStyle = 'black';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+
+        const maxWidth = this.radius * 1.8;
+        this.wrapText(context, this.name, 0, 0, maxWidth, 14);
+
+        context.restore();
+      }
+
+      wrapText(context, text, x, y, maxWidth, lineHeight) {
+        const words = text.split(' ');
+        let line = '';
+        const lines = [];
+
+        for (let n = 0; n < words.length; n++) {
+          const testLine = line + words[n] + ' ';
+          const metrics = context.measureText(testLine);
+          const testWidth = metrics.width;
+          if (testWidth > maxWidth && n > 0) {
+            lines.push(line);
+            line = words[n] + ' ';
+          } else {
+            line = testLine;
+          }
+        }
+        lines.push(line);
+
+        const totalHeight = lines.length * lineHeight;
+        let offsetY = -totalHeight / 2 + lineHeight / 2;
+
+        for (let i = 0; i < lines.length; i++) {
+          context.fillText(lines[i], x, y + offsetY);
+          offsetY += lineHeight;
+        }
+      }
+    }
+
+    // Función para agregar un agente
+    function addAgent() {
+      if (agentIndex < agentNames.length) {
+        const x = randomRange(0, width);
+        const y = randomRange(0, height);
+
+        const connections = countConnections(agentIndex);
+
+        const minRadius = 10;
+        const maxRadius = 50;
+        const maxConnections = adjacencyMatrix.length - 1;
+        const radius = mapRange(connections, 0, maxConnections, minRadius, maxRadius);
+
+        agents.push(new Agent(x, y, agentNames[agentIndex], agentIndex, radius));
+        agentIndex++;
+      } else {
+        clearInterval(agentInterval);
+      }
+    }
+
+    // Agregar el primer agente inmediatamente
+    addAgent();
+
+    // Intervalo para agregar agentes cada 4 segundos
+    const agentInterval = setInterval(addAgent, 4000);
+
+    // Animación
+    function animate() {
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = 'white';
+      context.fillRect(0, 0, width, height);
+
+      // Dibujar líneas según la matriz de adyacencia
+      for (let i = 0; i < agents.length; i++) {
+        const agent = agents[i];
+        for (let j = i + 1; j < agents.length; j++) {
+          if (adjacencyMatrix[i][j] === 1) {
+            const other = agents[j];
+
+            const dx = agent.pos.x - other.pos.x;
+            const dy = agent.pos.y - other.pos.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            const lineWidth = mapRange(dist, 0, width / 2, 6, 1);
+            const alpha = mapRange(dist, 0, width / 2, 1, 0.1);
+
+            context.lineWidth = lineWidth;
+            context.strokeStyle = `rgba(0, 0, 0, ${alpha})`;
+
+            context.beginPath();
+            context.moveTo(agent.pos.x, agent.pos.y);
+            context.lineTo(other.pos.x, other.pos.y);
+            context.stroke();
+          }
+        }
+      }
+
+      agents.forEach((agent) => {
+        agent.update();
+        agent.draw(context);
+        agent.bounce(width, height);
+      });
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Ajustar el canvas al cambiar el tamaño de la ventana
+    window.addEventListener('resize', function() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
