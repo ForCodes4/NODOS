@@ -17,7 +17,6 @@
 <body>
   <canvas id="myCanvas"></canvas>
   <script>
-    // MODIFICADO
     // Obtener el canvas y el contexto
     const canvas = document.getElementById('myCanvas');
     const context = canvas.getContext('2d');
@@ -44,19 +43,22 @@
     const agentNames = [
       'Inversores',
       'Industrias Productoras',
-      'Gobierno y Reguladores',
+      'Gobierno',
+      'Reguladores', // Nuevo agente agregado
       'Instituciones académicas',
       'Empresas tecnológicas de base',
       'Consumidores',
     ];
 
     const adjacencyMatrix = [
-      [0, 1, 1, 0, 1, 0],
-      [1, 0, 1, 1, 1, 1],
-      [1, 1, 0, 1, 1, 1],
-      [0, 1, 1, 0, 0, 0],
-      [1, 1, 1, 0, 0, 0],
-      [0, 1, 1, 0, 0, 0],
+      // Inversores       0  1  2  3  4  5  6
+      /* 0 Inversores */ [0, 1, 1, 1, 0, 1, 0],
+      /* 1 Industrias */ [1, 0, 1, 1, 1, 1, 1],
+      /* 2 Gobierno   */ [1, 1, 0, 1, 1, 1, 1],
+      /* 3 Reguladores*/ [1, 1, 1, 0, 0, 0, 0],
+      /* 4 Instituciones*/[0, 1, 1, 0, 0, 0, 0],
+      /* 5 Empresas   */ [1, 1, 1, 0, 0, 0, 0],
+      /* 6 Consumidores*/[0, 1, 1, 0, 0, 0, 0],
     ];
 
     const agents = [];
@@ -85,7 +87,7 @@
     class Agent {
       constructor(x, y, name, index, radius) {
         this.pos = new Vector(x, y);
-        this.vel = new Vector(randomRange(-1, 1), randomRange(-1, 1));
+        this.vel = new Vector(randomRange(-0.3, 0.3), randomRange(-0.3, 0.3));
         this.radius = radius;
         this.name = name;
         this.color = this.getColor(index);
@@ -93,12 +95,13 @@
 
       getColor(index) {
         const colors = [
-          '#e6194b',
-          '#3cb44b',
-          '#ffe119',
-          '#4363d8',
-          '#f58231',
-          '#911eb4',
+          '#e6194b', // Rojo
+          '#3cb44b', // Verde
+          '#ffe119', // Amarillo
+          '#4363d8', // Azul
+          '#f58231', // Naranja
+          '#911eb4', // Morado
+          '#42d4f4', // Turquesa (Nuevo color para el nuevo agente)
         ];
         return colors[index % colors.length];
       }
@@ -124,7 +127,7 @@
         context.stroke();
 
         // Mostrar el nombre del agente
-        context.font = `bold ${this.radius / 2}px Verdana`; // Tamaño de fuente proporcional al radio
+        context.font = `bold ${this.radius / 2}px Verdana`;
         context.fillStyle = 'black';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
@@ -170,8 +173,8 @@
         const connections = countConnections(agentIndex);
 
         // Ajustar el radio proporcionalmente al número de conexiones y al tamaño de la pantalla
-        const minRadius = Math.min(canvas.width, canvas.height) * 0.03; // 3% del tamaño mínimo de la pantalla
-        const maxRadius = Math.min(canvas.width, canvas.height) * 0.1;  // 10% del tamaño mínimo de la pantalla
+        const minRadius = Math.min(canvas.width, canvas.height) * 0.03;
+        const maxRadius = Math.min(canvas.width, canvas.height) * 0.1;
         const maxConnections = adjacencyMatrix.length - 1;
         const radius = mapRange(connections, 0, maxConnections, minRadius, maxRadius);
 
@@ -210,8 +213,8 @@
             const dist = Math.sqrt(dx * dx + dy * dy);
 
             // Ajustes para hacer las líneas más visibles
-            const lineWidth = mapRange(dist, 0, canvas.width / 2, 8, 2); // Aumentar el grosor mínimo
-            const alpha = mapRange(dist, 0, canvas.width / 2, 1, 0.3); // Aumentar el alpha mínimo
+            const lineWidth = mapRange(dist, 0, canvas.width / 2, 8, 2);
+            const alpha = mapRange(dist, 0, canvas.width / 2, 1, 0.3);
 
             context.lineWidth = lineWidth;
             context.strokeStyle = `rgba(0, 0, 0, ${alpha})`;
@@ -238,3 +241,4 @@
   </script>
 </body>
 </html>
+
