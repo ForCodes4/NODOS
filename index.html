@@ -44,7 +44,7 @@
       'Inversores',
       'Industrias Productoras',
       'Gobierno',
-      'Reguladores', // Agente agregado
+      'Reguladores', // Agente "Reguladores" agregado
       'Instituciones académicas',
       'Empresas tecnológicas de base',
       'Consumidores',
@@ -105,7 +105,7 @@
           '#4363d8', // Azul
           '#f58231', // Naranja
           '#911eb4', // Morado
-          '#42d4f4', // Turquesa (Nuevo color para el nuevo agente)
+          '#42d4f4', // Turquesa (Nuevo color para "Reguladores")
         ];
         return colors[index % colors.length];
       }
@@ -231,7 +231,7 @@
             const dist = Math.sqrt(dx * dx + dy * dy);
 
             // Ajustes para hacer las líneas más gruesas pero manteniendo la relación con la distancia
-            const lineWidth = mapRange(dist, 0, canvas.width / 2, 6, 2); // Aumentamos los valores
+            const lineWidth = mapRange(dist, 0, canvas.width / 2, 8, 3); // Valores aumentados
             const alpha = mapRange(dist, 0, canvas.width / 2, 0.9, 0.1);
 
             context.save();
