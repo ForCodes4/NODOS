@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Simulación de Canvas Adaptativa</title>
+  <title>Simulación de Canvas Mejorada</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
-      background-color: white;
+      background-color: black; /* Cambiamos el fondo a negro para resaltar los colores */
     }
     canvas {
       display: block;
@@ -44,7 +44,7 @@
       'Inversores',
       'Industrias Productoras',
       'Gobierno',
-      'Reguladores', // Nuevo agente agregado
+      'Reguladores',
       'Instituciones académicas',
       'Empresas tecnológicas de base',
       'Consumidores',
@@ -63,6 +63,9 @@
 
     const agents = [];
     let agentIndex = 0;
+
+    // Variables para el fondo degradado animado
+    let gradientShift = 0;
 
     // Función para contar conexiones
     function countConnections(index) {
@@ -87,10 +90,11 @@
     class Agent {
       constructor(x, y, name, index, radius) {
         this.pos = new Vector(x, y);
-        this.vel = new Vector(randomRange(-0.3, 0.3), randomRange(-0.3, 0.3));
+        this.vel = new Vector(randomRange(-0.5, 0.5), randomRange(-0.5, 0.5));
         this.radius = radius;
         this.name = name;
         this.color = this.getColor(index);
+        this.shadowColor = this.color; // Usaremos este color para las sombras y resplandores
       }
 
       getColor(index) {
@@ -101,7 +105,7 @@
           '#4363d8', // Azul
           '#f58231', // Naranja
           '#911eb4', // Morado
-          '#42d4f4', // Turquesa (Nuevo color para el nuevo agente)
+          '#42d4f4', // Turquesa
         ];
         return colors[index % colors.length];
       }
@@ -119,21 +123,31 @@
       draw(context) {
         context.save();
         context.translate(this.pos.x, this.pos.y);
-        context.lineWidth = 4;
+
+        // Aplicar sombra y resplandor
+        context.shadowColor = this.shadowColor;
+        context.shadowBlur = 20;
+
+        // Dibujar el círculo del agente
         context.beginPath();
         context.arc(0, 0, this.radius, 0, Math.PI * 2);
         context.fillStyle = this.color;
         context.fill();
+
+        // Dibujar el borde
+        context.lineWidth = 2;
+        context.strokeStyle = '#ffffff';
         context.stroke();
 
         // Mostrar el nombre del agente
-        context.font = `bold ${this.radius / 2}px Verdana`;
-        context.fillStyle = 'black';
+        context.shadowBlur = 0; // Desactivar sombra para el texto
+        context.font = `bold ${this.radius / 2.5}px Verdana`;
+        context.fillStyle = 'white';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
 
         const maxWidth = this.radius * 1.8;
-        this.wrapText(context, this.name, 0, 0, maxWidth, this.radius / 2);
+        this.wrapText(context, this.name, 0, 0, maxWidth, this.radius / 2.5);
 
         context.restore();
       }
@@ -173,8 +187,8 @@
         const connections = countConnections(agentIndex);
 
         // Ajustar el radio proporcionalmente al número de conexiones y al tamaño de la pantalla
-        const minRadius = Math.min(canvas.width, canvas.height) * 0.03;
-        const maxRadius = Math.min(canvas.width, canvas.height) * 0.1;
+        const minRadius = Math.min(canvas.width, canvas.height) * 0.04;
+        const maxRadius = Math.min(canvas.width, canvas.height) * 0.12;
         const maxConnections = adjacencyMatrix.length - 1;
         const radius = mapRange(connections, 0, maxConnections, minRadius, maxRadius);
 
@@ -192,13 +206,17 @@
     // Agregar el primer agente inmediatamente
     addAgent();
 
-    // Intervalo para agregar agentes cada 4 segundos
-    const agentInterval = setInterval(addAgent, 4000);
+    // Intervalo para agregar agentes cada 2 segundos
+    const agentInterval = setInterval(addAgent, 2000);
 
     // Animación
     function animate() {
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      context.fillStyle = 'white';
+      // Fondo degradado animado
+      gradientShift += 0.5;
+      const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, `hsl(${gradientShift % 360}, 50%, 15%)`);
+      gradient.addColorStop(1, `hsl(${(gradientShift + 60) % 360}, 50%, 5%)`);
+      context.fillStyle = gradient;
       context.fillRect(0, 0, canvas.width, canvas.height);
 
       // Dibujar líneas según la matriz de adyacencia
@@ -212,17 +230,21 @@
             const dy = agent.pos.y - other.pos.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
 
-            // Ajustes para hacer las líneas más visibles
-            const lineWidth = mapRange(dist, 0, canvas.width / 2, 8, 2);
-            const alpha = mapRange(dist, 0, canvas.width / 2, 1, 0.3);
+            // Ajustes para hacer las líneas más visibles y con efecto de resplandor
+            const lineWidth = mapRange(dist, 0, canvas.width / 2, 4, 1);
+            const alpha = mapRange(dist, 0, canvas.width / 2, 0.9, 0.1);
 
+            context.save();
             context.lineWidth = lineWidth;
-            context.strokeStyle = `rgba(0, 0, 0, ${alpha})`;
+            context.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+            context.shadowColor = 'white';
+            context.shadowBlur = 10;
 
             context.beginPath();
             context.moveTo(agent.pos.x, agent.pos.y);
             context.lineTo(other.pos.x, other.pos.y);
             context.stroke();
+            context.restore();
           }
         }
       }
